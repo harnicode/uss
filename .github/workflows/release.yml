@@ -71,5 +71,6 @@ jobs:
 
       - name: Package and Push Helm Chart
         run: |
+          helm dependency update charts/url-shortener
           helm package charts/url-shortener --version ${{ env.VERSION }} --app-version ${{ env.VERSION }}
           helm push url-shortener-${{ env.VERSION }}.tgz oci://${{ env.REGISTRY }}/${{ env.HELM_NAMESPACE }}
