@@ -1,0 +1,32 @@
+replicaCount: 1
+
+image:
+  repository: url-shortener
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+
+postgresql:
+  enabled: true
+  auth:
+    username: myuser
+    password: mypassword
+    database: urlshortener
+
+config:
+  NEXTAUTH_URL: "http://localhost:3000"
+  BASE_URL: "http://localhost:3000"
+  SMTP_HOST: "smtp.ethereal.email"
+  SMTP_PORT: "587"
+  SMTP_USER: "test@ethereal.email"
+
+secret:
+  NEXTAUTH_SECRET: "supersecretkey12345"
+  SMTP_PASSWORD: "password"
+  SMTP_FROM: "noreply@urlshortener.local"
