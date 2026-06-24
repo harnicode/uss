@@ -57,8 +57,8 @@ jobs:
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
           
           # Update Chart.yaml with the new version and appVersion
-          sed -i "s/^version:.*/version: ${VERSION}/" charts/url-shortener/Chart.yaml
-          sed -i "s/^appVersion:.*/appVersion: \"${VERSION}\"/" charts/url-shortener/Chart.yaml
+          sed -i "s/^version:.*/version: ${VERSION}/" charts/uss/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"${VERSION}\"/" charts/uss/Chart.yaml
 
       - name: Install Helm
         uses: azure/setup-helm@v4
@@ -71,6 +71,6 @@ jobs:
 
       - name: Package and Push Helm Chart
         run: |
-          helm dependency update charts/url-shortener
-          helm package charts/url-shortener --version ${{ env.VERSION }} --app-version ${{ env.VERSION }}
-          helm push url-shortener-${{ env.VERSION }}.tgz oci://${{ env.REGISTRY }}/${{ env.HELM_NAMESPACE }}
+          helm dependency update charts/uss
+          helm package charts/uss --version ${{ env.VERSION }} --app-version ${{ env.VERSION }}
+          helm push uss-${{ env.VERSION }}.tgz oci://${{ env.REGISTRY }}/${{ env.HELM_NAMESPACE }}
