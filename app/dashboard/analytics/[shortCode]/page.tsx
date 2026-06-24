@@ -1,12 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft, MousePointerClick, Globe, MonitorSmartphone } from "lucide-react";
-import QRCode from "react-qr-code";
-import { format } from "date-fns";
+import { ArrowLeft } from "lucide-react";
+import { format, subDays, eachDayOfInterval, isSameDay } from "date-fns";
+import { AnalyticsClient } from "./analytics-client";
 
 export default async function AnalyticsPage(
   { params }: { params: Promise<{ shortCode: string }> }
@@ -57,117 +56,38 @@ export default async function AnalyticsPage(
 
   const fullUrl = `${process.env.BASE_URL || "http://localhost:3000"}/${link.shortCode}`;
 
+  // Chart Data: last 7 days
+  const today = new Date();
+  const last7Days = eachDayOfInterval({ start: subDays(today, 6), end: today });
+  const chartData = last7Days.map(day => {
+    const clicksOnDay = link.clicks.filter(c => isSameDay(new Date(c.clickedAt), day)).length;
+    return {
+      date: format(day, "MMM dd"),
+      clicks: clicksOnDay
+    };
+  });
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard">
-            <Button variant="outline" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Analytics: /{link.shortCode}</h1>
-            <p className="text-muted-foreground">{link.originalUrl}</p>
-          </div>
+      <div className="flex items-center gap-4">
+        <Link href="/dashboard">
+          <Button variant="outline" size="icon" className="h-8 w-8">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">/{link.shortCode}</h1>
+          <p className="text-muted-foreground truncate max-w-[300px] sm:max-w-[500px]">{link.originalUrl}</p>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Clicks</CardTitle>
-            <MousePointerClick className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{link.clicks.length}</div>
-          </CardContent>
-        </Card>
-        
-        <Card className="col-span-1 md:col-span-1 lg:col-span-3 flex items-center p-6 gap-6">
-          <div className="bg-white p-2 rounded-md">
-            <QRCode value={fullUrl} size={80} />
-          </div>
-          <div>
-            <h3 className="font-semibold text-lg">QR Code</h3>
-            <p className="text-sm text-muted-foreground">Scan to visit the short link directly.</p>
-            <a href={fullUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
-              {fullUrl}
-            </a>
-          </div>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="h-4 w-4" /> Top Referrers
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {topReferrers.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No traffic yet.</p>
-            ) : (
-              <ul className="space-y-3">
-                {topReferrers.map(([ref, count]) => (
-                  <li key={ref} className="flex justify-between items-center text-sm">
-                    <span className="truncate max-w-[200px]">{ref}</span>
-                    <span className="font-medium">{count}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MonitorSmartphone className="h-4 w-4" /> Devices (Estimated)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {deviceTypes.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No traffic yet.</p>
-            ) : (
-              <ul className="space-y-3">
-                {deviceTypes.map(([device, count]) => (
-                  <li key={device} className="flex justify-between items-center text-sm">
-                    <span>{device}</span>
-                    <span className="font-medium">{count}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Clicks</CardTitle>
-          <CardDescription>The last 10 clicks on your link.</CardDescription>
-        </CardHeader>
-        <CardContent>
-           {link.clicks.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No clicks recorded.</p>
-            ) : (
-              <div className="space-y-4">
-                {link.clicks.slice(0, 10).map((click) => (
-                  <div key={click.id} className="flex flex-col sm:flex-row sm:items-center justify-between text-sm py-2 border-b last:border-0">
-                    <div className="text-muted-foreground">
-                      {format(new Date(click.clickedAt), "PPp")}
-                    </div>
-                    <div className="truncate max-w-[300px]">
-                      {click.referrer || "Direct"}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-        </CardContent>
-      </Card>
+      <AnalyticsClient 
+        link={link}
+        fullUrl={fullUrl}
+        topReferrers={topReferrers}
+        deviceTypes={deviceTypes}
+        chartData={chartData}
+      />
     </div>
   );
 }

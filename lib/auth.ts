@@ -16,6 +16,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         },
       },
       from: process.env.SMTP_FROM,
+      sendVerificationRequest({ url }) {
+        console.log("MAGIC LINK URL:", url);
+      },
     }),
   ],
   pages: {

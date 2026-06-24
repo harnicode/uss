@@ -5,20 +5,18 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Mail } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Link as LinkIcon, Loader2, Mail } from "lucide-react";
+import { toast } from "sonner";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
 
     try {
       const res = await signIn("nodemailer", {
@@ -28,56 +26,87 @@ export default function LoginPage() {
       });
 
       if (res?.error) {
-        setError(res.error);
+        toast.error("Failed to send login link", {
+          description: res.error,
+        });
       } else {
-        setSuccess(true);
+        toast.success("Magic link sent!", {
+          description: "Check your inbox to securely sign in.",
+        });
+        setEmail("");
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      toast.error("An unexpected error occurred");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold tracking-tight">Welcome back</CardTitle>
-          <CardDescription>
-            Enter your email to sign in to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {success ? (
-            <Alert className="bg-primary/10 text-primary border-primary/20">
-              <Mail className="h-4 w-4" />
-              <AlertDescription>
-                Check your email for a login link. You can safely close this tab.
-              </AlertDescription>
-            </Alert>
-          ) : (
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center p-4 sm:p-8 bg-muted/40">
+      <div className="w-full max-w-[400px] flex flex-col gap-6">
+        
+        {/* Header / Branding */}
+        <div className="flex flex-col items-center text-center gap-2 mb-2">
+          <Link href="/" className="flex items-center gap-2 font-bold tracking-tight text-xl mb-2 hover:opacity-80 transition-opacity">
+            <div className="bg-primary text-primary-foreground p-1.5 rounded-lg shadow-sm">
+              <LinkIcon className="h-5 w-5" />
+            </div>
+            uss.
+          </Link>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Welcome back
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Sign in to manage your links
+          </p>
+        </div>
+
+        {/* Card Form */}
+        <Card className="shadow-lg border-muted">
+          <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email Address</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="you@example.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
                 />
               </div>
-              {error && <div className="text-sm text-destructive">{error}</div>}
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Sending link..." : "Sign In with Email"}
+              
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Mail className="mr-2 h-4 w-4" />
+                )}
+                Continue with Email
               </Button>
             </form>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        
+        {/* Footer Links */}
+        <p className="text-center text-sm text-muted-foreground">
+          By clicking continue, you agree to our{" "}
+          <a href="#" className="underline underline-offset-4 hover:text-foreground transition-colors">
+            Terms of Service
+          </a>{" "}
+          and{" "}
+          <a href="#" className="underline underline-offset-4 hover:text-foreground transition-colors">
+            Privacy Policy
+          </a>.
+        </p>
+      </div>
     </div>
   );
 }

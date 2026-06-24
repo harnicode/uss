@@ -1,22 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
+import { Link2, Loader2 } from "lucide-react";
 
 export function CreateLinkForm({ onSuccess }: { onSuccess: () => void }) {
   const [originalUrl, setOriginalUrl] = useState("");
   const [customShortCode, setCustomShortCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
 
     try {
       const res = await fetch("/api/links", {
@@ -32,23 +31,35 @@ export function CreateLinkForm({ onSuccess }: { onSuccess: () => void }) {
 
       setOriginalUrl("");
       setCustomShortCode("");
+      toast.success("Link Created Successfully", {
+        description: "Your new short URL is ready to be shared.",
+      });
       onSuccess();
     } catch (err: any) {
-      setError(err.message);
+      toast.error("Failed to create link", {
+        description: err.message,
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Card>
+    <Card className="shadow-sm">
       <CardHeader>
-        <CardTitle>Create New Link</CardTitle>
-        <CardDescription>Shorten a long URL and optionally specify a custom code.</CardDescription>
+        <div className="flex items-center gap-2">
+          <div className="p-2 bg-primary/10 text-primary rounded-md">
+            <Link2 className="h-5 w-5" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">Create New Link</CardTitle>
+            <CardDescription>Shorten a long URL and optionally specify a custom code.</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 items-end">
+          <div className="space-y-2 flex-1 w-full">
             <Label htmlFor="url">Destination URL</Label>
             <Input
               id="url"
@@ -58,10 +69,11 @@ export function CreateLinkForm({ onSuccess }: { onSuccess: () => void }) {
               value={originalUrl}
               onChange={(e) => setOriginalUrl(e.target.value)}
               disabled={loading}
+              className="bg-muted/50"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="code">Custom Short Code (Optional)</Label>
+          <div className="space-y-2 flex-1 w-full">
+            <Label htmlFor="code">Custom Code (Optional)</Label>
             <Input
               id="code"
               type="text"
@@ -71,10 +83,11 @@ export function CreateLinkForm({ onSuccess }: { onSuccess: () => void }) {
               disabled={loading}
               pattern="[a-zA-Z0-9-]+"
               title="Only letters, numbers, and hyphens are allowed"
+              className="bg-muted/50"
             />
           </div>
-          {error && <div className="text-sm text-destructive">{error}</div>}
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading} className="w-full md:w-auto h-10">
+            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             {loading ? "Creating..." : "Shorten URL"}
           </Button>
         </form>
